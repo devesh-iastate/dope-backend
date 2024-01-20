@@ -1,0 +1,5 @@
+aiohttp==3.8.1  # Replace with the latest version you've tested with
+fastapi==0.75.0  # Replace with the latest version you've tested with
+boto3==1.21.1  # Replace with the latest version you've tested with
+python-dotenv==0.19.2  # Replace with the latest version you've tested with
+python-multipart==0.0.5  # Replace with the latest version you've tested with
