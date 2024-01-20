@@ -18,7 +18,7 @@ This application provides a FastAPI server for handling file uploads, downloads,
 ## Installation & Setup
 1. **Clone the Repository**
     ```
-    git clone [[repository-url]](https://github.com/devesh-iastate/dope-backend.git)
+    git clone [https://github.com/devesh-iastate/dope-backend.git]
     cd dope-backend
     ```
 
