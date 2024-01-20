@@ -1,16 +1,19 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, status, Form, Response, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException, status, Form, Response, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import aiohttp
+import boto3
 from botocore.exceptions import NoCredentialsError
+from io import BytesIO
+import zipfile
 import logging
-from utils import s3_client, verify_token, create_zip_in_memory, load_environment_variables
+from dotenv import load_dotenv
 
 # Load environment variables
-load_environment_variables()
+load_dotenv()
 
-# Create FastAPI instance
+# FastAPI app instance
 app = FastAPI()
 
 # Configure CORS
@@ -23,12 +26,57 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Logging configuration
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# S3 Client for AWS S3 / DigitalOcean Spaces
-client = s3_client()
+# Load environment variables
+ACCESS_KEY = os.getenv('ACCESS_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+admin_username = os.getenv('admin_username')
+admin_apiKey = os.getenv('admin_apiKey')
+GROUP_ID = os.getenv('GROUP_ID')
+APP_ID = os.getenv('APP_ID')
+
+# boto3 client for interacting with AWS S3 (DigitalOcean Spaces in this case)
+client = boto3.client(
+    's3',
+    endpoint_url='https://nyc3.digitaloceanspaces.com',
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+)
+
+# Async function to verify user token using MongoDB Realm
+async def verify_token(token: str) -> bool:
+    admin_token_url = "https://realm.mongodb.com/api/admin/v3.0/auth/providers/mongodb-cloud/login"
+    data = {
+        "username": admin_username,
+        "apiKey": admin_apiKey
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(admin_token_url, json=data) as response:
+                if response.status != 200:
+                    return False
+                admin_token = await response.json()
+
+        admin_access_token = admin_token["access_token"]
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + admin_access_token
+        }
+        payload = json.dumps({
+            "token": token
+        })
+        client_verify_token_url = f"https://realm.mongodb.com/api/admin/v3.0/groups/{GROUP_ID}/apps/{APP_ID}/users/verify_token"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(client_verify_token_url, headers=headers, data=payload) as response:
+                return response.status == 200
+    except Exception as e:
+        logger.error(f"Token verification failed: {str(e)}")
+        return False
 
 
 @app.post("/api/upload_file/")
