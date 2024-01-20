@@ -18,8 +18,8 @@ This application provides a FastAPI server for handling file uploads, downloads,
 ## Installation & Setup
 1. **Clone the Repository**
     ```
-    git clone [repository-url]
-    cd [repository-name]
+    git clone [[repository-url]](https://github.com/devesh-iastate/dope-backend.git)
+    cd dope-backend
     ```
 
 2. **Set Environment Variables**
@@ -60,6 +60,3 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 ## License
 [MIT License](LICENSE) or your preferred license.
 
----
-
-Make sure to replace `[repository-url]`, `[repository-name]`, and other placeholders with your actual data. Also, consider adding a `LICENSE` file if you haven't already.
